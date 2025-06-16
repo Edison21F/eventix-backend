@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL") // Usa tu variable de entorno
+}
+
+model User {
+  id             Int       @id @default(autoincrement())
+  email          String    @unique
+  password_hash  String
+  name           String
+  avatar_url     String?   
+  status         UserStatus @default(active)
+  email_verified Boolean   @default(false)
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
+  roles          UserRole[]
+  tickets        Ticket[]
+  transactions   Transaction[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+}
+
+enum UserStatus {
+  active
+  inactive
+  suspended
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  permissions Json
+  created_at  DateTime @default(now())
+
+  users       UserRole[]
+}
+
+model UserRole {
+  user_id     Int
+  role_id     Int
+  assigned_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, role_id])
+}
+
+model EventCategory {
+  id            Int      @id @default(autoincrement())
+  name          String   @unique
+  slug          String   @unique
+  description   String?
+  icon          String?
+  color         String?
+  is_active     Boolean  @default(true)
+  config_schema Json
+  created_at    DateTime @default(now())
+}
+
+model Ticket {
+  id             String   @id // UUID
+  event_id       String   // MongoDB ObjectId como string
+  user_id        Int
+  ticket_type    String
+  seat_info      Json?
+  price          Decimal
+  currency       String   @default("USD")
+  status         TicketStatus @default(reserved)
+  qr_code        String?
+  purchase_date  DateTime @default(now())
+  valid_until    DateTime?
+  metadata       Json?
+
+  user           User     @relation(fields: [user_id], references: [id])
+  transactions   TicketTransaction[]
+
+  @@index([event_id])
+  @@index([user_id])
+  @@index([status])
+}
+
+enum TicketStatus {
+  reserved
+  confirmed
+  cancelled
+  used
+}
+
+model Transaction {
+  id                      String   @id // UUID
+  user_id                 Int
+  amount                  Decimal
+  currency                String   @default("USD")
+  payment_method          String?
+  payment_provider        String?
+  provider_transaction_id String?
+  status                  TransactionStatus @default(pending)
+  description             String?
+  metadata                Json?
+  created_at              DateTime @default(now())
+
+  user                   User     @relation(fields: [user_id], references: [id])
+  tickets                TicketTransaction[]
+
+  @@index([user_id])
+  @@index([status])
+}
+
+enum TransactionStatus {
+  pending
+  completed
+  failed
+  refunded
+}
+
+model TicketTransaction {
+  ticket_id      String
+  transaction_id String
+
+  ticket      Ticket      @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  transaction Transaction @relation(fields: [transaction_id], references: [id], onDelete: Cascade)
+
+  @@id([ticket_id, transaction_id])
+}
+
+model AuditLog {
+  id            Int      @id @default(autoincrement())
+  user_id       Int?
+  action        String
+  resource_type String?
+  resource_id   String?
+  old_values    Json?
+  new_values    Json?
+  ip_address    String?
+  user_agent    String?
+  created_at    DateTime @default(now())
+
+  user User? @relation(fields: [user_id], references: [id])
+
+  @@index([user_id])
+  @@index([action])
+  @@index([created_at])
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  title       String
+  message     String
+  type        String
+  read        Boolean  @default(false)
+  action_url  String?
+  metadata    Json?
+  created_at  DateTime @default(now())
+
+  user        User     @relation(fields: [user_id], references: [id])
+}
