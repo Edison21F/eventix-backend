@@ -6,8 +6,13 @@
   "scripts": {
     "dev": "nodemon src/app.js",
     "start": "node src/app.js",
+    "build": "echo 'No build step required for Node.js'",
     "prisma:migrate": "npx prisma migrate dev",
-    "prisma:generate": "npx prisma generate"
+    "prisma:generate": "npx prisma generate",
+    "prisma:studio": "npx prisma studio",
+    "prisma:reset": "npx prisma migrate reset",
+    "seed": "node scripts/seed.js",
+    "test": "echo 'No tests specified' && exit 0"
   },
   "author": "Edison Flores",
   "license": "ISC",
@@ -19,6 +24,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "express-validator": "^7.2.0",
     "helmet": "^8.1.0",
     "ioredis": "^5.6.1",
     "joi": "^17.13.3",
@@ -28,10 +34,14 @@
     "multer": "^2.0.1",
     "nodemailer": "^7.0.3",
     "pdfkit": "^0.17.1",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.3",
     "prisma": "^6.9.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
